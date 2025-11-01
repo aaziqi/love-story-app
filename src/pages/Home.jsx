@@ -1,152 +1,263 @@
 import { motion } from "framer-motion";
+import { Heart, Calendar, Clock, Sparkles, Camera, BookOpen, Settings } from "lucide-react";
 import Timer from "../components/Timer";
-import { Heart, Calendar, Camera, BookOpen } from "lucide-react";
 import { useSettings } from "../hooks/useLocalStorage";
 
 export default function Home() {
   const { settings } = useSettings();
-  const features = [
-    {
-      icon: Calendar,
-      title: "恋爱计时器",
-      description: "精确记录我们在一起的每一天",
-      color: "text-pink-500"
-    },
-    {
-      icon: BookOpen,
-      title: "爱情故事",
-      description: "记录属于我们的美好回忆",
-      color: "text-purple-500"
-    },
-    {
-      icon: Camera,
-      title: "甜蜜相册",
-      description: "珍藏每一个幸福瞬间",
-      color: "text-blue-500"
-    }
-  ];
 
-  const milestones = [
-    { date: "2023-05-01", event: "我们相遇了", emoji: "💕" },
-    { date: "2023-05-15", event: "第一次约会", emoji: "🌹" },
-    { date: "2023-06-01", event: "确定关系", emoji: "💍" },
-    { date: "2023-12-25", event: "第一个圣诞节", emoji: "🎄" }
-  ];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.3,
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
+
+  const floatingVariants = {
+    animate: {
+      y: [-10, 10, -10],
+      rotate: [0, 5, -5, 0],
+      transition: {
+        duration: 6,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
 
   return (
-    <div className="min-h-screen pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 欢迎区域 */}
+    <motion.div
+      className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 relative overflow-hidden"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* 动态背景装饰 */}
+      <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <motion.h1
-            className="text-5xl md:text-7xl font-bold text-deepPink mb-6 font-love"
-            animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            Welcome to Our Love Story
-          </motion.h1>
-          <motion.p
-            className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-          >
-            这里记录着我们的爱情时光，每一个美好的瞬间都值得被永远珍藏。
-            让我们一起回顾那些甜蜜的回忆，期待更多美好的未来。
-          </motion.p>
-        </motion.div>
-
-        {/* 计时器 */}
-        <div className="mb-20">
-          <Timer startDate={settings?.dates?.startDate || "2023-05-01"} />
-        </div>
-
-        {/* 功能特色 */}
+          className="absolute top-20 left-10 w-32 h-32 bg-pink-200/30 dark:bg-pink-500/20 rounded-full blur-xl"
+          variants={floatingVariants}
+          animate="animate"
+        />
         <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12 font-love">
-            我们的爱情档案
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={feature.title}
-                  className="love-card text-center group"
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.2 }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                >
-                  <motion.div
-                    className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-white to-lightPink mb-6 ${feature.color}`}
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.8 }}
+          className="absolute top-40 right-20 w-24 h-24 bg-purple-200/30 dark:bg-purple-500/20 rounded-full blur-xl"
+          variants={floatingVariants}
+          animate="animate"
+          style={{ animationDelay: "2s" }}
+        />
+        <motion.div
+          className="absolute bottom-32 left-1/4 w-40 h-40 bg-indigo-200/30 dark:bg-indigo-500/20 rounded-full blur-xl"
+          variants={floatingVariants}
+          animate="animate"
+          style={{ animationDelay: "4s" }}
+        />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* 主要内容区域 - 窗口式布局 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+          
+          {/* 左侧主窗口 */}
+          <motion.div
+            className="lg:col-span-8 space-y-6"
+            variants={itemVariants}
+          >
+            {/* 欢迎卡片 */}
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/20 dark:border-gray-700/20"
+              whileHover={{ scale: 1.02, y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <motion.h1
+                    className="text-4xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent mb-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
                   >
-                    <Icon size={32} />
-                  </motion.div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* 重要时刻 */}
-        <motion.div
-          className="love-card"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12 font-love">
-            重要时刻
-          </h2>
-          <div className="space-y-6">
-            {milestones.map((milestone, index) => (
-              <motion.div
-                key={index}
-                className="flex items-center space-x-6 p-4 bg-gradient-to-r from-white to-lightPink rounded-xl"
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ scale: 1.02, x: 10 }}
-              >
-                <div className="text-4xl">{milestone.emoji}</div>
-                <div className="flex-1">
-                  <div className="text-lg font-semibold text-gray-800">
-                    {milestone.event}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {new Date(milestone.date).toLocaleDateString('zh-CN')}
-                  </div>
+                    我们的爱情故事
+                  </motion.h1>
+                  <motion.p
+                    className="text-gray-600 dark:text-gray-300 text-lg"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    记录每一个美好的瞬间
+                  </motion.p>
                 </div>
                 <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                  className="relative"
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
                 >
-                  <Heart className="text-lovePink" size={24} fill="currentColor" />
+                  <Heart className="w-16 h-16 text-pink-500 fill-current" />
+                  <motion.div
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Sparkles className="w-3 h-3 text-white" />
+                  </motion.div>
                 </motion.div>
+              </div>
+
+              {/* 计时器区域 */}
+              <div className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 rounded-2xl p-6">
+                <Timer startDate={settings?.dates?.startDate || "2023-05-01"} />
+              </div>
+            </motion.div>
+
+            {/* 快速统计卡片 */}
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-xl">
+                    <Calendar className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">纪念日提醒</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">永不忘记重要日子</p>
+                  </div>
+                </div>
               </motion.div>
-            ))}
-          </div>
-        </motion.div>
+
+              <motion.div
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                    <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">美好回忆</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">珍藏每个瞬间</p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
+          {/* 右侧侧边栏 */}
+          <motion.div
+            className="lg:col-span-4 space-y-6"
+            variants={itemVariants}
+          >
+            {/* 今日心情卡片 */}
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+                <Heart className="w-5 h-5 text-pink-500 mr-2" />
+                今日心情
+              </h3>
+              <div className="space-y-3">
+                {["💕", "🌟", "🌈", "🦋"].map((emoji, index) => (
+                  <motion.button
+                    key={index}
+                    className="w-full p-3 text-left rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
+                    whileHover={{ x: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-2xl mr-3">{emoji}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {["甜蜜", "闪耀", "彩虹", "轻盈"][index]}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* 快速导航卡片 */}
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">快速导航</h3>
+              <div className="space-y-2">
+                {[
+                  { name: "爱情故事", icon: BookOpen, color: "pink" },
+                  { name: "照片相册", icon: Camera, color: "purple" },
+                  { name: "个人设置", icon: Settings, color: "indigo" }
+                ].map((item, index) => (
+                  <motion.button
+                    key={index}
+                    className="w-full p-3 text-left rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 dark:hover:from-pink-900/20 dark:hover:to-purple-900/20 transition-all duration-300"
+                    whileHover={{ x: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 bg-${item.color}-100 dark:bg-${item.color}-900/30 rounded-lg`}>
+                        <item.icon className={`w-4 h-4 text-${item.color}-600 dark:text-${item.color}-400`} />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {item.name}
+                      </span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* 重要时刻预览 */}
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">重要时刻</h3>
+              <div className="space-y-3">
+                {[
+                  { date: "2023-05-01", event: "我们相遇了", emoji: "💕" },
+                  { date: "2023-06-01", event: "确定关系", emoji: "💍" }
+                ].map((milestone, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-center space-x-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <span className="text-xl">{milestone.emoji}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {milestone.event}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(milestone.date).toLocaleDateString('zh-CN')}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
