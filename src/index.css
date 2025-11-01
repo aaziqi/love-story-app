@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Georgia', serif;
+    background: linear-gradient(135deg, #fff7f9 0%, #fce4ec 100%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .love-card {
+    @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-pink-100 p-6 transition-all duration-300 hover:shadow-xl hover:scale-105;
+  }
+  
+  .love-button {
+    @apply bg-gradient-to-r from-lovePink to-deepPink text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  .love-input {
+    @apply w-full px-4 py-3 border-2 border-pink-200 rounded-xl focus:border-lovePink focus:outline-none transition-colors duration-300 bg-white/50 backdrop-blur-sm;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fce4ec;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f5a3b5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e91e63;
+}
