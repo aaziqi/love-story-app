@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Heart, User, Calendar, Palette, Bell, Save, Check } from 'lucide-react';
 import { useSettings } from '../hooks/useLocalStorage';
+import DataSync from '../components/DataSync';
 
 const SettingsPage = () => {
   const { settings, updateSettings } = useSettings();
@@ -302,6 +303,15 @@ const SettingsPage = () => {
                 </motion.button>
               </label>
             </div>
+          </motion.div>
+
+          {/* 数据同步 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <DataSync />
           </motion.div>
         </div>
 
