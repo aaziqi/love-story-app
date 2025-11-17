@@ -11,6 +11,12 @@ import {
   fetchSettingsRemote,
   updateSettingsRemote
 } from '../services/db'
+import {
+  fetchMilestones,
+  createMilestoneRemote,
+  updateMilestoneRemote,
+  deleteMilestoneRemote
+} from '../services/db'
 
 // 通用的 localStorage hook
 export const useLocalStorage = (key, initialValue) => {
@@ -271,3 +277,50 @@ export const useSettings = () => {
 
   return { settings, updateSettings, updateNotifications };
 };
+
+export const useMilestones = () => {
+  const initialMilestones = [
+    { id: 1, date: '2023-05-01', event: '我们相遇了', emoji: '💕' },
+    { id: 2, date: '2023-06-01', event: '确定关系', emoji: '💍' }
+  ]
+  const [milestones, setMilestones] = useLocalStorage('love-diary-milestones', initialMilestones)
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const remote = await fetchMilestones()
+        if (remote && mounted) setMilestones(remote)
+      } catch {}
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const addMilestone = async (m) => {
+    const item = { ...m, date: m.date || new Date().toISOString().split('T')[0] }
+    try {
+      const created = await createMilestoneRemote(item)
+      if (created) { setMilestones(prev => [created, ...prev]); return }
+    } catch {}
+    const local = { ...item, id: Date.now() }
+    setMilestones(prev => [local, ...prev])
+  }
+
+  const updateMilestone = async (id, updates) => {
+    try {
+      const updated = await updateMilestoneRemote(id, updates)
+      if (updated) { setMilestones(prev => prev.map(x => x.id === id ? { ...x, ...updated } : x)); return }
+    } catch {}
+    setMilestones(prev => prev.map(x => x.id === id ? { ...x, ...updates } : x))
+  }
+
+  const deleteMilestone = async (id) => {
+    try {
+      const ok = await deleteMilestoneRemote(id)
+      if (ok) { setMilestones(prev => prev.filter(x => x.id !== id)); return }
+    } catch {}
+    setMilestones(prev => prev.filter(x => x.id !== id))
+  }
+
+  return { milestones, addMilestone, updateMilestone, deleteMilestone }
+}

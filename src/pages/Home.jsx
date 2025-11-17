@@ -1,10 +1,17 @@
 import { motion } from "framer-motion";
-import { Heart, Calendar, Clock, Sparkles, Camera, BookOpen, Settings } from "lucide-react";
+import { useState } from "react";
+import { Heart, Calendar, Clock, Sparkles, Camera, BookOpen, Settings, CheckCircle } from "lucide-react";
 import Timer from "../components/Timer";
 import { useSettings } from "../hooks/useLocalStorage";
+import MoodHistory from "../components/MoodHistory";
+import { createMoodRemote } from "../services/db";
+import { useMilestones } from "../hooks/useLocalStorage";
 
-export default function Home() {
+export default function Home({ onPageChange }) {
   const { settings } = useSettings();
+  const [feedback, setFeedback] = useState("");
+  const { milestones, addMilestone, deleteMilestone } = useMilestones();
+  const [newMilestone, setNewMilestone] = useState({ date: "", event: "", emoji: "💕" });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -185,6 +192,18 @@ export default function Home() {
                     className="w-full p-3 text-left rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
                     whileHover={{ x: 5 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={async () => {
+                      const labels = ["💕", "🌟", "🌈", "🦋"]
+                      try { await createMoodRemote(labels[index]) } catch {}
+                      try {
+                        const raw = localStorage.getItem('love-moods')
+                        const arr = raw ? JSON.parse(raw) : []
+                        arr.push({ mood: labels[index], created_at: new Date().toISOString() })
+                        localStorage.setItem('love-moods', JSON.stringify(arr))
+                      } catch {}
+                      setFeedback(`已记录今日心情`)
+                      setTimeout(() => setFeedback(""), 2000)
+                    }}
                   >
                     <span className="text-2xl mr-3">{emoji}</span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -203,15 +222,16 @@ export default function Home() {
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">快速导航</h3>
               <div className="space-y-2">
                 {[
-                  { name: "爱情故事", icon: BookOpen, color: "pink" },
-                  { name: "照片相册", icon: Camera, color: "purple" },
-                  { name: "个人设置", icon: Settings, color: "indigo" }
+                  { id: "stories", name: "爱情故事", icon: BookOpen, color: "pink" },
+                  { id: "gallery", name: "照片相册", icon: Camera, color: "purple" },
+                  { id: "settings", name: "个人设置", icon: Settings, color: "indigo" }
                 ].map((item, index) => (
                   <motion.button
                     key={index}
                     className="w-full p-3 text-left rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 dark:hover:from-pink-900/20 dark:hover:to-purple-900/20 transition-all duration-300"
                     whileHover={{ x: 5 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => onPageChange && onPageChange(item.id)}
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`p-2 bg-${item.color}-100 dark:bg-${item.color}-900/30 rounded-lg`}>
@@ -226,19 +246,17 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* 重要时刻预览 */}
+            <MoodHistory />
+
             <motion.div
               className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
               whileHover={{ scale: 1.02 }}
             >
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">重要时刻</h3>
               <div className="space-y-3">
-                {[
-                  { date: "2023-05-01", event: "我们相遇了", emoji: "💕" },
-                  { date: "2023-06-01", event: "确定关系", emoji: "💍" }
-                ].map((milestone, index) => (
+                {milestones.map((milestone) => (
                   <motion.div
-                    key={index}
+                    key={milestone.id}
                     className="flex items-center space-x-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl"
                     whileHover={{ scale: 1.02 }}
                   >
@@ -251,12 +269,68 @@ export default function Home() {
                         {new Date(milestone.date).toLocaleDateString('zh-CN')}
                       </div>
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => deleteMilestone(milestone.id)}
+                      className="px-2 py-1 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                    >
+                      删除
+                    </motion.button>
                   </motion.div>
                 ))}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-3">
+                  <input
+                    type="date"
+                    value={newMilestone.date}
+                    onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
+                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    value={newMilestone.event}
+                    onChange={(e) => setNewMilestone({ ...newMilestone, event: e.target.value })}
+                    placeholder="事件"
+                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  />
+                  <select
+                    value={newMilestone.emoji}
+                    onChange={(e) => setNewMilestone({ ...newMilestone, emoji: e.target.value })}
+                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  >
+                    <option>💕</option>
+                    <option>💍</option>
+                    <option>🌟</option>
+                    <option>🌈</option>
+                  </select>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (!newMilestone.event) return
+                      addMilestone(newMilestone)
+                      setNewMilestone({ date: "", event: "", emoji: "💕" })
+                    }}
+                    className="px-3 py-2 rounded-lg bg-deepPink text-white"
+                  >
+                    添加
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
         </div>
+        {feedback && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-xl shadow"
+          >
+            <CheckCircle className="w-5 h-5" />
+            <span className="text-sm">{feedback}</span>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

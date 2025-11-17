@@ -6,10 +6,13 @@ import Home from "./pages/Home";
 import StoryPage from "./pages/StoryPage";
 import GalleryPage from "./pages/GalleryPage";
 import SettingsPage from "./pages/SettingsPage";
+import AuthPage from "./pages/AuthPage";
+import { getUser, onAuthChange } from "./services/db";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState(null);
 
   // 页面组件映射
   const pages = {
@@ -65,6 +68,24 @@ function App() {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    let sub
+    ;(async () => {
+      const u = await getUser()
+      setUser(u)
+      sub = onAuthChange(setUser)
+    })()
+    return () => { sub?.unsubscribe?.() }
+  }, [])
+
+  if (!user) {
+    return (
+      <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
+        <AuthPage onAuthed={setUser} />
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
       {/* 背景装饰 */}
@@ -115,7 +136,7 @@ function App() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <CurrentPageComponent />
+            <CurrentPageComponent onPageChange={handlePageChange} />
           </motion.div>
         </AnimatePresence>
       </main>
