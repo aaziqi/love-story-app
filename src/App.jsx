@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import StoryPage from "./pages/StoryPage";
-import GalleryPage from "./pages/GalleryPage";
-import SettingsPage from "./pages/SettingsPage";
+const Home = lazy(() => import("./pages/Home"));
+const StoryPage = lazy(() => import("./pages/StoryPage"));
+const GalleryPage = lazy(() => import("./pages/GalleryPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 import AuthPage from "./pages/AuthPage";
 import { getUser, onAuthChange } from "./services/db";
 
@@ -136,7 +136,9 @@ function App() {
             variants={pageVariants}
             transition={pageTransition}
           >
-            <CurrentPageComponent onPageChange={handlePageChange} />
+            <Suspense fallback={<div className="text-center py-12 text-gray-500">正在加载...</div>}>
+              <CurrentPageComponent onPageChange={handlePageChange} />
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>
