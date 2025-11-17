@@ -29,7 +29,7 @@ export default function GalleryPage() {
             try {
               const created = await uploadPhotoFile(file)
               if (created) confirmPhoto(tempId, created)
-              else removeLocalOnly(tempId)
+              // 若未返回云端记录（未登录或未配置），保留本地占位以避免丢失
             } catch {
               // 保留本地占位以避免丢失
             }
