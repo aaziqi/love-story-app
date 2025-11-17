@@ -353,8 +353,11 @@ const SettingsPage = () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   try {
-                    localStorage.setItem('love-supabase-url', supabaseUrl)
-                    localStorage.setItem('love-supabase-anon', supabaseAnon)
+                    const u = (supabaseUrl || '').trim()
+                    const k = (supabaseAnon || '').trim()
+                    if (!/^https?:\/\//.test(u) || !k) { alert('请填写有效的 Supabase URL 与 Anon Key'); return }
+                    localStorage.setItem('love-supabase-url', u)
+                    localStorage.setItem('love-supabase-anon', k)
                     alert('已保存，请重新登录以启用云同步')
                   } catch (e) {
                     alert('保存失败：' + e.message)
@@ -363,6 +366,24 @@ const SettingsPage = () => {
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-xl"
               >
                 保存云端配置
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('love-supabase-url')
+                    localStorage.removeItem('love-supabase-anon')
+                    alert('已清除本地云配置，恢复到环境变量')
+                    setSupabaseUrl('')
+                    setSupabaseAnon('')
+                  } catch (e) {
+                    alert('清除失败：' + e.message)
+                  }
+                }}
+                className="mt-3 w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white py-3 px-6 rounded-xl"
+              >
+                清除本地云配置
               </motion.button>
             </div>
           </motion.div>

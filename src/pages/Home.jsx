@@ -7,6 +7,8 @@ import MoodHistory from "../components/MoodHistory";
 import { createMoodRemote } from "../services/db";
 import { useMilestones } from "../hooks/useLocalStorage";
 import { useGallery } from "../hooks/useLocalStorage";
+import { useStories } from "../hooks/useLocalStorage";
+import StoryCard from "../components/StoryCard";
 
 export default function Home({ onPageChange }) {
   const { settings } = useSettings();
@@ -18,6 +20,8 @@ export default function Home({ onPageChange }) {
   const filteredMilestones = selectedTag ? milestones.filter(m => Array.isArray(m.tags) && m.tags.includes(selectedTag)) : milestones
   const { photos } = useGallery();
   const previewPhotos = [...photos].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,6)
+  const { stories, updateStory, deleteStory } = useStories()
+  const latestStories = [...stories].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,2)
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -174,6 +178,20 @@ export default function Home({ onPageChange }) {
                   </div>
                 </div>
               </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              variants={itemVariants}
+            >
+              {latestStories.map((s, i) => (
+                <StoryCard key={s.id ?? i} story={s} index={i} onUpdate={updateStory} onDelete={deleteStory} />
+              ))}
+              {latestStories.length === 0 && (
+                <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">暂无故事，前往故事页面添加</div>
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
 

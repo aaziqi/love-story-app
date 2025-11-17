@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, Lock, Mail, Sparkles, CheckCircle } from 'lucide-react'
 import { signIn, signUp, getUser, signInWithProvider } from '../services/db'
@@ -102,11 +102,14 @@ export default function AuthPage({ onAuthed }) {
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       try {
-                        localStorage.setItem('love-supabase-url', urlInput)
-                        localStorage.setItem('love-supabase-anon', keyInput)
+                        const u = (urlInput || '').trim()
+                        const k = (keyInput || '').trim()
+                        if (!/^https?:\/\//.test(u) || !k) { setError('请填写有效的 Supabase URL 与 Anon Key'); return }
+                        localStorage.setItem('love-supabase-url', u)
+                        localStorage.setItem('love-supabase-anon', k)
                         setSuccess('云配置已保存，请重新登录')
                         setNeedsConfig(false)
-                        setCurrentUrl(urlInput)
+                        setCurrentUrl(u)
                       } catch (e) {
                         setError(e.message)
                       }
@@ -114,6 +117,23 @@ export default function AuthPage({ onAuthed }) {
                     className="w-full px-4 py-2 rounded-xl bg-deepPink text-white"
                   >
                     保存云配置
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      try {
+                        localStorage.removeItem('love-supabase-url')
+                        localStorage.removeItem('love-supabase-anon')
+                        const fromEnv = (import.meta.env.VITE_SUPABASE_URL || '').trim()
+                        setCurrentUrl(fromEnv)
+                        setSuccess('已清除本地云配置，恢复到环境变量')
+                        setNeedsConfig(!fromEnv)
+                      } catch (e) {
+                        setError(e.message)
+                      }
+                    }}
+                    className="w-full px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white"
+                  >
+                    清除本地云配置
                   </motion.button>
                 </div>
               )}
