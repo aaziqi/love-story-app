@@ -6,46 +6,36 @@ import { useGallery } from '../hooks/useLocalStorage';
 import { uploadPhotoFile } from '../services/db';
 
 export default function GalleryPage() {
-  const { photos, addPhoto, updatePhoto, deletePhoto } = useGallery();
+  const { photos, addPhoto, updatePhoto, deletePhoto, appendLocalPhoto } = useGallery();
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileUpload = async (event) => {
-    const files = Array.from(event.target.files);
-    for (const file of files) {
-      if (!file.type.startsWith('image/')) continue
-      setIsUploading(true)
-      try {
-        const created = await uploadPhotoFile(file)
-        if (!created) {
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            const newPhoto = {
-              url: e.target.result,
-              title: file.name.split('.')[0],
-              description: '美好回忆',
-              date: new Date().toISOString().split('T')[0]
-            }
-            addPhoto(newPhoto)
-          }
-          reader.readAsDataURL(file)
-        } else {
-          addPhoto(created)
-        }
-      } catch {
+    const files = Array.from(event.target.files)
+    if (files.length === 0) return
+    setIsUploading(true)
+    try {
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue
         const reader = new FileReader()
         reader.onload = (e) => {
-          const newPhoto = {
+          const tempPhoto = {
             url: e.target.result,
             title: file.name.split('.')[0],
             description: '美好回忆',
             date: new Date().toISOString().split('T')[0]
           }
-          addPhoto(newPhoto)
+          appendLocalPhoto(tempPhoto)
         }
         reader.readAsDataURL(file)
-      } finally {
-        setIsUploading(false)
+        try {
+          const created = await uploadPhotoFile(file)
+          // 成功后依赖 Realtime 订阅自动刷新，不再二次调用 addPhoto 以避免重复插入
+        } catch {
+          // 失败保留本地临时照片
+        }
       }
+    } finally {
+      setIsUploading(false)
     }
   };
 
