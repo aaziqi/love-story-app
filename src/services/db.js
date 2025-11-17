@@ -49,7 +49,7 @@ export async function signIn(email, password) {
 export async function signUp(email, password) {
   const supabase = getSupabase()
   if (!supabase) throw new Error('Supabase 未配置')
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined } })
   if (error) throw error
   return data
 }
@@ -64,7 +64,7 @@ export async function signOut() {
 export async function signInWithProvider(provider) {
   const supabase = getSupabase()
   if (!supabase) throw new Error('Supabase 未配置')
-  const { error } = await supabase.auth.signInWithOAuth({ provider })
+  const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined } })
   if (error) throw error
 }
 
