@@ -331,8 +331,10 @@ export async function uploadStoryImage(file) {
   if (!supabase) return null
   const scope = await getScope()
   if (!scope) return null
-  const filePath = `stories/${scope.value}/${Date.now()}-${file.name}`
-  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false })
+  const safeName = (file?.name || 'story').normalize('NFKC').replace(/[^\w\.\-]+/g, '_')
+  const ts = new Date().toISOString().replace(/[:\.]/g, '-')
+  const filePath = `stories/${scope.value}/${ts}-${safeName}`
+  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false, contentType: file?.type || 'application/octet-stream', cacheControl: '3600' })
   if (ue) throw ue
   const { data: pub } = supabase.storage.from('photos').getPublicUrl(filePath)
   return pub?.publicUrl || null
