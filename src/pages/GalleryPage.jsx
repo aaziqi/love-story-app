@@ -6,7 +6,7 @@ import { useGallery } from '../hooks/useLocalStorage';
 import { uploadPhotoFile } from '../services/db';
 
 export default function GalleryPage() {
-  const { photos, addPhoto, updatePhoto, deletePhoto, appendLocalPhoto, removeLocalOnly } = useGallery();
+  const { photos, addPhoto, updatePhoto, deletePhoto, appendLocalPhoto, removeLocalOnly, confirmPhoto } = useGallery();
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileUpload = async (event) => {
@@ -27,9 +27,12 @@ export default function GalleryPage() {
           const tempId = appendLocalPhoto(tempPhoto)
           ;(async () => {
             try {
-              await uploadPhotoFile(file)
-              removeLocalOnly(tempId)
-            } catch {}
+              const created = await uploadPhotoFile(file)
+              if (created) confirmPhoto(tempId, created)
+              else removeLocalOnly(tempId)
+            } catch {
+              // 保留本地占位以避免丢失
+            }
           })()
         }
         reader.readAsDataURL(file)

@@ -205,6 +205,13 @@ export const useGallery = () => {
     setPhotos(prev => prev.filter(p => p.id !== id))
   }
 
+  const confirmPhoto = (tempId, remotePhoto) => {
+    setPhotos(prev => {
+      const withoutTemp = prev.filter(p => p.id !== tempId)
+      return [remotePhoto, ...withoutTemp]
+    })
+  }
+
   const addPhoto = async (newPhoto) => {
     const photo = {
       ...newPhoto,
@@ -243,7 +250,7 @@ export const useGallery = () => {
     setPhotos(prev => prev.map(photo => photo.id === id ? { ...photo, ...updatedPhoto } : photo))
   }
 
-  return { photos, addPhoto, deletePhoto, updatePhoto, appendLocalPhoto, removeLocalOnly };
+  return { photos, addPhoto, deletePhoto, updatePhoto, appendLocalPhoto, removeLocalOnly, confirmPhoto };
 };
 
 // 专门用于设置数据的 hook
