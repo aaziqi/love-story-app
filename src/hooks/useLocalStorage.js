@@ -1,4 +1,16 @@
 import { useState, useEffect } from 'react';
+import {
+  fetchStories,
+  createStoryRemote,
+  updateStoryRemote,
+  deleteStoryRemote,
+  fetchPhotos,
+  createPhotoRemote,
+  updatePhotoRemote,
+  deletePhotoRemote,
+  fetchSettingsRemote,
+  updateSettingsRemote
+} from '../services/db'
 
 // 通用的 localStorage hook
 export const useLocalStorage = (key, initialValue) => {
@@ -53,24 +65,58 @@ export const useStories = () => {
 
   const [stories, setStories] = useLocalStorage('love-diary-stories', initialStories);
 
-  const addStory = (newStory) => {
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const remote = await fetchStories()
+        if (remote && mounted) {
+          setStories(remote)
+        }
+      } catch {}
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const addStory = async (newStory) => {
     const story = {
       ...newStory,
-      id: Date.now(), // 简单的ID生成
       date: newStory.date || new Date().toISOString().split('T')[0]
-    };
-    setStories(prev => [story, ...prev]);
-  };
+    }
+    try {
+      const created = await createStoryRemote(story)
+      if (created) {
+        setStories(prev => [created, ...prev])
+        return
+      }
+    } catch {}
+    const local = { ...story, id: Date.now() }
+    setStories(prev => [local, ...prev])
+  }
 
-  const updateStory = (id, updatedStory) => {
-    setStories(prev => prev.map(story => 
-      story.id === id ? { ...story, ...updatedStory } : story
-    ));
-  };
+  const updateStory = async (id, updatedStory) => {
+    try {
+      const updated = await updateStoryRemote(id, updatedStory)
+      if (updated) {
+        setStories(prev => prev.map(story => story.id === id ? { ...story, ...updated } : story))
+        return
+      }
+    } catch {}
+    setStories(prev => prev.map(story => story.id === id ? { ...story, ...updatedStory } : story))
+  }
 
-  const deleteStory = (id) => {
-    setStories(prev => prev.filter(story => story.id !== id));
-  };
+  const deleteStory = async (id) => {
+    try {
+      const ok = await deleteStoryRemote(id)
+      if (ok) {
+        setStories(prev => prev.filter(story => story.id !== id))
+        return
+      }
+    } catch {}
+    setStories(prev => prev.filter(story => story.id !== id))
+  }
 
   return { stories, addStory, updateStory, deleteStory };
 };
@@ -106,24 +152,58 @@ export const useGallery = () => {
 
   const [photos, setPhotos] = useLocalStorage('love-diary-photos', initialPhotos);
 
-  const addPhoto = (newPhoto) => {
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const remote = await fetchPhotos()
+        if (remote && mounted) {
+          setPhotos(remote)
+        }
+      } catch {}
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const addPhoto = async (newPhoto) => {
     const photo = {
       ...newPhoto,
-      id: Date.now(),
       date: newPhoto.date || new Date().toISOString().split('T')[0]
-    };
-    setPhotos(prev => [photo, ...prev]);
-  };
+    }
+    try {
+      const created = await createPhotoRemote(photo)
+      if (created) {
+        setPhotos(prev => [created, ...prev])
+        return
+      }
+    } catch {}
+    const local = { ...photo, id: Date.now() }
+    setPhotos(prev => [local, ...prev])
+  }
 
-  const deletePhoto = (id) => {
-    setPhotos(prev => prev.filter(photo => photo.id !== id));
-  };
+  const deletePhoto = async (id) => {
+    try {
+      const ok = await deletePhotoRemote(id)
+      if (ok) {
+        setPhotos(prev => prev.filter(photo => photo.id !== id))
+        return
+      }
+    } catch {}
+    setPhotos(prev => prev.filter(photo => photo.id !== id))
+  }
 
-  const updatePhoto = (id, updatedPhoto) => {
-    setPhotos(prev => prev.map(photo => 
-      photo.id === id ? { ...photo, ...updatedPhoto } : photo
-    ));
-  };
+  const updatePhoto = async (id, updatedPhoto) => {
+    try {
+      const updated = await updatePhotoRemote(id, updatedPhoto)
+      if (updated) {
+        setPhotos(prev => prev.map(photo => photo.id === id ? { ...photo, ...updated } : photo))
+        return
+      }
+    } catch {}
+    setPhotos(prev => prev.map(photo => photo.id === id ? { ...photo, ...updatedPhoto } : photo))
+  }
 
   return { photos, addPhoto, deletePhoto, updatePhoto };
 };
@@ -150,16 +230,44 @@ export const useSettings = () => {
 
   const [settings, setSettings] = useLocalStorage('love-diary-settings', initialSettings);
 
-  const updateSettings = (newSettings) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  };
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const remote = await fetchSettingsRemote()
+        if (remote && mounted) {
+          setSettings(prev => ({ ...prev, ...remote }))
+        }
+      } catch {}
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
-  const updateNotifications = (notifications) => {
-    setSettings(prev => ({ 
-      ...prev, 
-      notifications: { ...prev.notifications, ...notifications }
-    }));
-  };
+  const updateSettings = async (newSettings) => {
+    const next = typeof newSettings === 'function' ? newSettings(settings) : newSettings
+    try {
+      const updated = await updateSettingsRemote({ ...settings, ...next })
+      if (updated) {
+        setSettings(prev => ({ ...prev, ...updated }))
+        return
+      }
+    } catch {}
+    setSettings(prev => ({ ...prev, ...next }))
+  }
+
+  const updateNotifications = async (notifications) => {
+    const next = { notifications: { ...settings.notifications, ...notifications } }
+    try {
+      const updated = await updateSettingsRemote({ ...settings, ...next })
+      if (updated) {
+        setSettings(prev => ({ ...prev, ...updated }))
+        return
+      }
+    } catch {}
+    setSettings(prev => ({ ...prev, ...next }))
+  }
 
   return { settings, updateSettings, updateNotifications };
 };

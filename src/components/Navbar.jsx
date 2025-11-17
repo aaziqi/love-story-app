@@ -1,9 +1,23 @@
 import { motion } from "framer-motion";
 import { Heart, Home, BookOpen, Camera, Settings, Moon, Sun } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUser, onAuthChange, signIn, signOut, signUp } from '../services/db'
 
 export default function Navbar({ currentPage, onPageChange, darkMode, toggleDarkMode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let sub
+    ;(async () => {
+      const u = await getUser()
+      setUser(u)
+      sub = onAuthChange(setUser)
+    })()
+    return () => {
+      sub?.unsubscribe?.()
+    }
+  }, [])
 
   const navItems = [
     { id: "home", label: "首页", icon: Home },
@@ -63,6 +77,61 @@ export default function Navbar({ currentPage, onPageChange, darkMode, toggleDark
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </motion.button>
+
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-gray-600 text-sm">{user.email}</span>
+                <motion.button
+                  onClick={async () => { await signOut(); setUser(null) }}
+                  className="px-3 py-2 rounded-lg bg-lightPink text-deepPink hover:bg-pink-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  退出登录
+                </motion.button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <motion.button
+                  onClick={async () => {
+                    const email = window.prompt('邮箱')
+                    const password = window.prompt('密码')
+                    if (!email || !password) return
+                    try {
+                      await signIn(email, password)
+                      const u = await getUser()
+                      setUser(u)
+                    } catch (e) {
+                      alert(e.message)
+                    }
+                  }}
+                  className="px-3 py-2 rounded-lg bg-deepPink text-white hover:bg-pink-600"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  登录
+                </motion.button>
+                <motion.button
+                  onClick={async () => {
+                    const email = window.prompt('注册邮箱')
+                    const password = window.prompt('注册密码')
+                    if (!email || !password) return
+                    try {
+                      await signUp(email, password)
+                      const u = await getUser()
+                      setUser(u)
+                    } catch (e) {
+                      alert(e.message)
+                    }
+                  }}
+                  className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  注册
+                </motion.button>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -129,6 +198,55 @@ export default function Navbar({ currentPage, onPageChange, darkMode, toggleDark
                 {darkMode ? "浅色模式" : "深色模式"}
               </span>
             </motion.button>
+
+            {user ? (
+              <motion.button
+                onClick={async () => { await signOut(); setUser(null) }}
+                className="w-full flex items-center justify-center space-x-3 px-4 py-3 rounded-lg bg-lightPink text-deepPink hover:bg-pink-200"
+                whileHover={{ x: 5 }}
+              >
+                退出登录
+              </motion.button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <motion.button
+                  onClick={async () => {
+                    const email = window.prompt('邮箱')
+                    const password = window.prompt('密码')
+                    if (!email || !password) return
+                    try {
+                      await signIn(email, password)
+                      const u = await getUser()
+                      setUser(u)
+                    } catch (e) {
+                      alert(e.message)
+                    }
+                  }}
+                  className="w-full px-4 py-3 rounded-lg bg-deepPink text-white hover:bg-pink-600"
+                  whileHover={{ x: 5 }}
+                >
+                  登录
+                </motion.button>
+                <motion.button
+                  onClick={async () => {
+                    const email = window.prompt('注册邮箱')
+                    const password = window.prompt('注册密码')
+                    if (!email || !password) return
+                    try {
+                      await signUp(email, password)
+                      const u = await getUser()
+                      setUser(u)
+                    } catch (e) {
+                      alert(e.message)
+                    }
+                  }}
+                  className="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  whileHover={{ x: 5 }}
+                >
+                  注册
+                </motion.button>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

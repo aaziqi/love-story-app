@@ -8,6 +8,8 @@ const SettingsPage = () => {
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings || {});
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'unsaved'
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseAnon, setSupabaseAnon] = useState('');
 
   // 当settings加载完成后，更新localSettings
   useEffect(() => {
@@ -15,6 +17,13 @@ const SettingsPage = () => {
       setLocalSettings(settings);
     }
   }, [settings]);
+
+  useEffect(() => {
+    try {
+      setSupabaseUrl(localStorage.getItem('love-supabase-url') || '')
+      setSupabaseAnon(localStorage.getItem('love-supabase-anon') || '')
+    } catch {}
+  }, [])
 
   // 监听设置变化并自动保存
   useEffect(() => {
@@ -302,6 +311,57 @@ const SettingsPage = () => {
                   />
                 </motion.button>
               </label>
+            </div>
+          </motion.div>
+
+          {/* 云同步设置 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6"
+          >
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+              <Settings className="mr-3 text-pink-500" />
+              云同步设置
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Supabase URL</label>
+                <input
+                  type="text"
+                  value={supabaseUrl}
+                  onChange={(e) => setSupabaseUrl(e.target.value)}
+                  placeholder="https://xxxxx.supabase.co"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Anon Public Key</label>
+                <input
+                  type="password"
+                  value={supabaseAnon}
+                  onChange={(e) => setSupabaseAnon(e.target.value)}
+                  placeholder="eyJhbGciOi..."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                />
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  try {
+                    localStorage.setItem('love-supabase-url', supabaseUrl)
+                    localStorage.setItem('love-supabase-anon', supabaseAnon)
+                    alert('已保存，请重新登录以启用云同步')
+                  } catch (e) {
+                    alert('保存失败：' + e.message)
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-xl"
+              >
+                保存云端配置
+              </motion.button>
             </div>
           </motion.div>
 

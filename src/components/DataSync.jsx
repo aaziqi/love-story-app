@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, Upload, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { useStories, useGallery, useSettings } from '../hooks/useLocalStorage';
+import { upsertStories, upsertPhotos, fetchStories, fetchPhotos, fetchSettingsRemote, updateSettingsRemote } from '../services/db'
 
 export default function DataSync() {
   const { stories } = useStories();
@@ -9,6 +10,7 @@ export default function DataSync() {
   const { settings } = useSettings();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   // 导出所有数据
@@ -87,6 +89,42 @@ export default function DataSync() {
     reader.readAsText(file);
   };
 
+  const backupToCloud = async () => {
+    setIsCloudSyncing(true)
+    try {
+      await upsertStories(stories)
+      await upsertPhotos(photos)
+      await updateSettingsRemote(settings)
+      setMessage({ type: 'success', text: '云备份完成' })
+    } catch (error) {
+      setMessage({ type: 'error', text: '云备份失败：' + error.message })
+    } finally {
+      setIsCloudSyncing(false)
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    }
+  }
+
+  const restoreFromCloud = async () => {
+    setIsCloudSyncing(true)
+    try {
+      const s = await fetchStories()
+      const p = await fetchPhotos()
+      const set = await fetchSettingsRemote()
+      if (s) localStorage.setItem('love-diary-stories', JSON.stringify(s))
+      if (p) localStorage.setItem('love-diary-photos', JSON.stringify(p))
+      if (set) localStorage.setItem('love-diary-settings', JSON.stringify(set))
+      setMessage({ type: 'success', text: '云恢复完成，请刷新页面查看更新' })
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
+    } catch (error) {
+      setMessage({ type: 'error', text: '云恢复失败：' + error.message })
+    } finally {
+      setIsCloudSyncing(false)
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+    }
+  }
+
   return (
     <motion.div
       className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
@@ -152,6 +190,39 @@ export default function DataSync() {
             )}
             <span>{isImporting ? '导入中...' : '从文件导入数据'}</span>
           </motion.label>
+        </div>
+
+        {/* 云备份与恢复 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <motion.button
+            onClick={backupToCloud}
+            disabled={isCloudSyncing}
+            className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isCloudSyncing ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : (
+              <Upload className="w-5 h-5" />
+            )}
+            <span>{isCloudSyncing ? '云备份中...' : '备份到云端'}</span>
+          </motion.button>
+
+          <motion.button
+            onClick={restoreFromCloud}
+            disabled={isCloudSyncing}
+            className="w-full flex items-center justify-center space-x-3 bg-gradient-to-r from-teal-500 to-green-600 hover:from-teal-600 hover:to-green-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isCloudSyncing ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : (
+              <Download className="w-5 h-5" />
+            )}
+            <span>{isCloudSyncing ? '云恢复中...' : '从云端恢复'}</span>
+          </motion.button>
         </div>
 
         {/* 使用说明 */}
