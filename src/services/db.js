@@ -187,8 +187,8 @@ export async function fetchSettingsRemote() {
     .from('settings')
     .select('*')
     .eq(scope.field, scope.value)
-    .single()
-  if (error && error.code !== 'PGRST116') throw error
+    .maybeSingle()
+  if (error) throw error
   return data || null
 }
 
