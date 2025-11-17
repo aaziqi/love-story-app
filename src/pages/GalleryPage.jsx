@@ -6,7 +6,7 @@ import { useGallery } from '../hooks/useLocalStorage';
 import { uploadPhotoFile } from '../services/db';
 
 export default function GalleryPage() {
-  const { photos, addPhoto, updatePhoto, deletePhoto, appendLocalPhoto } = useGallery();
+  const { photos, addPhoto, updatePhoto, deletePhoto, appendLocalPhoto, removeLocalOnly } = useGallery();
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileUpload = async (event) => {
@@ -24,15 +24,15 @@ export default function GalleryPage() {
             description: '美好回忆',
             date: new Date().toISOString().split('T')[0]
           }
-          appendLocalPhoto(tempPhoto)
+          const tempId = appendLocalPhoto(tempPhoto)
+          ;(async () => {
+            try {
+              await uploadPhotoFile(file)
+              removeLocalOnly(tempId)
+            } catch {}
+          })()
         }
         reader.readAsDataURL(file)
-        try {
-          const created = await uploadPhotoFile(file)
-          // 成功后依赖 Realtime 订阅自动刷新，不再二次调用 addPhoto 以避免重复插入
-        } catch {
-          // 失败保留本地临时照片
-        }
       }
     } finally {
       setIsUploading(false)
