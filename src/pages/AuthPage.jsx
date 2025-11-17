@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, Lock, Mail, Sparkles, CheckCircle } from 'lucide-react'
 import { signIn, signUp, getUser, signInWithProvider } from '../services/db'
+import { getSupabase } from '../services/supabaseClient'
 
 export default function AuthPage({ onAuthed }) {
   const [mode, setMode] = useState('login')
@@ -10,6 +11,14 @@ export default function AuthPage({ onAuthed }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [urlInput, setUrlInput] = useState('')
+  const [keyInput, setKeyInput] = useState('')
+  const [needsConfig, setNeedsConfig] = useState(false)
+
+  useEffect(() => {
+    const client = getSupabase()
+    setNeedsConfig(!client)
+  }, [])
 
   const submit = async () => {
     setLoading(true)
@@ -79,6 +88,28 @@ export default function AuthPage({ onAuthed }) {
               {mode === 'login' ? '登录' : '注册'}
             </h2>
             <div className="space-y-4">
+              {needsConfig && (
+                <div className="space-y-3 bg-pink-50 dark:bg-pink-900/20 p-3 rounded-xl">
+                  <div className="text-sm text-pink-700 dark:text-pink-300">检测到 Supabase 未配置，请填写以下信息后保存再登录：</div>
+                  <input type="text" value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="Supabase URL (https://xxxxx.supabase.co)" className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white" />
+                  <input type="password" value={keyInput} onChange={e => setKeyInput(e.target.value)} placeholder="Anon Public Key" className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white" />
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      try {
+                        localStorage.setItem('love-supabase-url', urlInput)
+                        localStorage.setItem('love-supabase-anon', keyInput)
+                        setSuccess('云配置已保存，请重新登录')
+                        setNeedsConfig(false)
+                      } catch (e) {
+                        setError(e.message)
+                      }
+                    }}
+                    className="w-full px-4 py-2 rounded-xl bg-deepPink text-white"
+                  >
+                    保存云配置
+                  </motion.button>
+                </div>
+              )}
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-gray-500" />
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="邮箱" className="flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white" />
