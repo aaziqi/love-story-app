@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Heart, Lock, Mail, Sparkles, CheckCircle, AlertCircle } from 'lucide-react'
-import { signIn, signUp, getUser } from '../services/db'
+import { Heart, Lock, Mail, Sparkles, CheckCircle } from 'lucide-react'
+import { signIn, signUp, getUser, signInWithProvider } from '../services/db'
 
 export default function AuthPage({ onAuthed }) {
   const [mode, setMode] = useState('login')
@@ -97,6 +97,10 @@ export default function AuthPage({ onAuthed }) {
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={submit} disabled={loading} className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-xl disabled:opacity-60">
                 {loading ? '处理中...' : (mode === 'login' ? '登录' : '注册')}
               </motion.button>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signInWithProvider('google')} className="w-full px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white">使用 Google 登录</motion.button>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => signInWithProvider('github')} className="w-full px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white">使用 GitHub 登录</motion.button>
+              </div>
               <div className="text-sm text-gray-600 dark:text-gray-300 text-center">
                 {mode === 'login' ? (
                   <button onClick={() => setMode('signup')} className="text-pink-600">没有账号？去注册</button>

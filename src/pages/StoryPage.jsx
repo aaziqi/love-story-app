@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Heart, BookOpen, Sparkles } from 'lucide-react';
 import StoryCard from '../components/StoryCard';
 import { useStories } from '../hooks/useLocalStorage';
+import { uploadStoryImage } from '../services/db';
 
 const StoryPage = () => {
   const { stories, addStory, updateStory, deleteStory } = useStories();
@@ -15,20 +16,24 @@ const StoryPage = () => {
     mood: 'happy',
     image: ''
   });
+  const [imageFile, setImageFile] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newStory.title && newStory.content) {
-      addStory(newStory);
-      setNewStory({
-        title: '',
-        date: new Date().toISOString().split('T')[0],
-        location: '',
-        content: '',
-        mood: 'happy',
-        image: ''
-      });
-      setShowForm(false);
+    if (!newStory.title || !newStory.content) return
+    setSubmitting(true)
+    try {
+      let imageUrl = newStory.image
+      if (imageFile) {
+        try { imageUrl = await uploadStoryImage(imageFile) || imageUrl } catch {}
+      }
+      await addStory({ ...newStory, image: imageUrl })
+      setNewStory({ title: '', date: new Date().toISOString().split('T')[0], location: '', content: '', mood: 'happy', image: '' })
+      setImageFile(null)
+      setShowForm(false)
+    } finally {
+      setSubmitting(false)
     }
   };
 
@@ -154,17 +159,15 @@ const StoryPage = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      图片链接 (可选)
-                    </label>
-                    <input
-                      type="url"
-                      value={newStory.image}
-                      onChange={(e) => setNewStory(prev => ({ ...prev, image: e.target.value }))}
-                      className="love-input w-full"
-                      placeholder="https://example.com/image.jpg"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图片链接 (可选)</label>
+                      <input type="url" value={newStory.image} onChange={(e) => setNewStory(prev => ({ ...prev, image: e.target.value }))} className="love-input w-full" placeholder="https://example.com/image.jpg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">上传图片 (可选)</label>
+                      <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0] || null)} className="love-input w-full" />
+                    </div>
                   </div>
 
                   <div>
@@ -187,7 +190,7 @@ const StoryPage = () => {
                       type="submit"
                       className="flex-1 love-button"
                     >
-                      保存故事
+                      {submitting ? '保存中…' : '保存故事'}
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -206,7 +209,7 @@ const StoryPage = () => {
         </AnimatePresence>
 
         {/* 故事列表 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence>
             {stories.map((story, index) => (
               <StoryCard

@@ -61,6 +61,13 @@ export async function signOut() {
   if (error) throw error
 }
 
+export async function signInWithProvider(provider) {
+  const supabase = getSupabase()
+  if (!supabase) throw new Error('Supabase 未配置')
+  const { error } = await supabase.auth.signInWithOAuth({ provider })
+  if (error) throw error
+}
+
 export async function fetchStories() {
   const supabase = getSupabase()
   if (!supabase) return null
@@ -288,6 +295,45 @@ export async function listMoodsRemote(limit = 10) {
     .limit(limit)
   if (error) throw error
   return data || []
+}
+
+export async function uploadPhotoFile(file) {
+  const supabase = getSupabase()
+  if (!supabase) return null
+  const scope = await getScope()
+  if (!scope) return null
+  const filePath = `${scope.value}/${Date.now()}-${file.name}`
+  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false })
+  if (ue) throw ue
+  const { data: pub } = supabase.storage.from('photos').getPublicUrl(filePath)
+  const url = pub?.publicUrl
+  const photo = { url, title: file.name.split('.')[0], date: new Date().toISOString().split('T')[0] }
+  const created = await createPhotoRemote(photo)
+  return created
+}
+
+export async function uploadMilestoneImage(file) {
+  const supabase = getSupabase()
+  if (!supabase) return null
+  const scope = await getScope()
+  if (!scope) return null
+  const filePath = `milestones/${scope.value}/${Date.now()}-${file.name}`
+  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false })
+  if (ue) throw ue
+  const { data: pub } = supabase.storage.from('photos').getPublicUrl(filePath)
+  return pub?.publicUrl || null
+}
+
+export async function uploadStoryImage(file) {
+  const supabase = getSupabase()
+  if (!supabase) return null
+  const scope = await getScope()
+  if (!scope) return null
+  const filePath = `stories/${scope.value}/${Date.now()}-${file.name}`
+  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false })
+  if (ue) throw ue
+  const { data: pub } = supabase.storage.from('photos').getPublicUrl(filePath)
+  return pub?.publicUrl || null
 }
 
 export async function fetchMilestones() {

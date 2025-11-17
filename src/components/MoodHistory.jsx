@@ -1,29 +1,39 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { listMoodsRemote } from '../services/db'
+import { getSupabase } from '../services/supabaseClient'
 
 export default function MoodHistory() {
   const [items, setItems] = useState([])
   useEffect(() => {
-    ;(async () => {
+    const refetch = async () => {
       try {
         const data = await listMoodsRemote(10)
         if (data && data.length > 0) setItems(data)
         else {
-          try {
-            const raw = localStorage.getItem('love-moods')
-            const arr = raw ? JSON.parse(raw) : []
-            setItems(arr.slice(-10).reverse())
-          } catch {}
-        }
-      } catch {
-        try {
           const raw = localStorage.getItem('love-moods')
           const arr = raw ? JSON.parse(raw) : []
           setItems(arr.slice(-10).reverse())
-        } catch {}
+        }
+      } catch {
+        const raw = localStorage.getItem('love-moods')
+        const arr = raw ? JSON.parse(raw) : []
+        setItems(arr.slice(-10).reverse())
+      }
+    }
+    refetch()
+    const handler = () => refetch()
+    window.addEventListener('mood-added', handler)
+    const supabase = getSupabase()
+    let channel
+    ;(async () => {
+      if (supabase) {
+        channel = supabase.channel('moods-feed').on('postgres_changes', { event: '*', schema: 'public', table: 'moods' }, (payload) => {
+          refetch()
+        }).subscribe()
       }
     })()
+    return () => window.removeEventListener('mood-added', handler)
   }, [])
   return (
     <motion.div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"

@@ -11,6 +11,7 @@ import {
   fetchSettingsRemote,
   updateSettingsRemote
 } from '../services/db'
+import { getSupabase } from '../services/supabaseClient'
 import {
   fetchMilestones,
   createMilestoneRemote,
@@ -81,8 +82,18 @@ export const useStories = () => {
         }
       } catch {}
     })()
+    const supabase = getSupabase()
+    let channel
+    ;(async () => {
+      if (supabase) {
+        channel = supabase.channel('stories-feed').on('postgres_changes', { event: '*', schema: 'public', table: 'stories' }, () => {
+          ;(async () => { try { const remote = await fetchStories(); if (remote) setStories(remote) } catch {} })()
+        }).subscribe()
+      }
+    })()
     return () => {
       mounted = false
+      channel?.unsubscribe?.()
     }
   }, [])
 
@@ -168,8 +179,18 @@ export const useGallery = () => {
         }
       } catch {}
     })()
+    const supabase = getSupabase()
+    let channel
+    ;(async () => {
+      if (supabase) {
+        channel = supabase.channel('photos-feed').on('postgres_changes', { event: '*', schema: 'public', table: 'photos' }, () => {
+          ;(async () => { try { const remote = await fetchPhotos(); if (remote) setPhotos(remote) } catch {} })()
+        }).subscribe()
+      }
+    })()
     return () => {
       mounted = false
+      channel?.unsubscribe?.()
     }
   }, [])
 

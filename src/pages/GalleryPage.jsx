@@ -3,29 +3,50 @@ import { motion } from "framer-motion";
 import Gallery from "../components/Gallery";
 import { Camera, Heart, Upload, Image as ImageIcon } from "lucide-react";
 import { useGallery } from '../hooks/useLocalStorage';
+import { uploadPhotoFile } from '../services/db';
 
 export default function GalleryPage() {
   const { photos, addPhoto, updatePhoto, deletePhoto } = useGallery();
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
-    
-    files.forEach((file) => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue
+      setIsUploading(true)
+      try {
+        const created = await uploadPhotoFile(file)
+        if (!created) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const newPhoto = {
+              url: e.target.result,
+              title: file.name.split('.')[0],
+              description: '美好回忆',
+              date: new Date().toISOString().split('T')[0]
+            }
+            addPhoto(newPhoto)
+          }
+          reader.readAsDataURL(file)
+        } else {
+          addPhoto(created)
+        }
+      } catch {
+        const reader = new FileReader()
         reader.onload = (e) => {
           const newPhoto = {
             url: e.target.result,
             title: file.name.split('.')[0],
             description: '美好回忆',
             date: new Date().toISOString().split('T')[0]
-          };
-          addPhoto(newPhoto);
-        };
-        reader.readAsDataURL(file);
+          }
+          addPhoto(newPhoto)
+        }
+        reader.readAsDataURL(file)
+      } finally {
+        setIsUploading(false)
       }
-    });
+    }
   };
 
   // 计算统计数据
@@ -36,7 +57,7 @@ export default function GalleryPage() {
   const memoriesCount = photos.length;
 
   return (
-    <div className="min-h-screen pt-20 pb-10">
+    <div className="min-h-screen pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <motion.div
@@ -79,15 +100,17 @@ export default function GalleryPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Upload size={20} />
-              <span>上传新照片</span>
+              {isUploading ? <span>上传中...</span> : (<>
+                <Upload size={20} />
+                <span>上传新照片</span>
+              </>)}
             </motion.label>
           </div>
         </motion.div>
 
         {/* 统计信息 */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
@@ -119,7 +142,7 @@ export default function GalleryPage() {
               onDeletePhoto={deletePhoto}
             />
           ) : (
-            <div className="text-center py-16">
+            <div className="text-center py-20">
               <ImageIcon className="w-24 h-24 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">
                 还没有照片

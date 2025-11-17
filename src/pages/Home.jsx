@@ -6,12 +6,18 @@ import { useSettings } from "../hooks/useLocalStorage";
 import MoodHistory from "../components/MoodHistory";
 import { createMoodRemote } from "../services/db";
 import { useMilestones } from "../hooks/useLocalStorage";
+import { useGallery } from "../hooks/useLocalStorage";
 
 export default function Home({ onPageChange }) {
   const { settings } = useSettings();
   const [feedback, setFeedback] = useState("");
   const { milestones, addMilestone, deleteMilestone } = useMilestones();
   const [newMilestone, setNewMilestone] = useState({ date: "", event: "", emoji: "💕" });
+  const [selectedTag, setSelectedTag] = useState("");
+  const allTags = Array.from(new Set((milestones || []).flatMap(m => Array.isArray(m.tags) ? m.tags : [])))
+  const filteredMilestones = selectedTag ? milestones.filter(m => Array.isArray(m.tags) && m.tags.includes(selectedTag)) : milestones
+  const { photos } = useGallery();
+  const previewPhotos = [...photos].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,6)
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -78,11 +84,11 @@ export default function Home({ onPageChange }) {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* 主要内容区域 - 窗口式布局 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
           
           {/* 左侧主窗口 */}
           <motion.div
-            className="lg:col-span-8 space-y-6"
+            className="lg:col-span-8 space-y-8"
             variants={itemVariants}
           >
             {/* 欢迎卡片 */}
@@ -173,7 +179,7 @@ export default function Home({ onPageChange }) {
 
           {/* 右侧侧边栏 */}
           <motion.div
-            className="lg:col-span-4 space-y-6"
+            className="lg:col-span-4 space-y-8"
             variants={itemVariants}
           >
             {/* 今日心情卡片 */}
@@ -203,6 +209,7 @@ export default function Home({ onPageChange }) {
                       } catch {}
                       setFeedback(`已记录今日心情`)
                       setTimeout(() => setFeedback(""), 2000)
+                      try { window.dispatchEvent(new Event('mood-added')) } catch {}
                     }}
                   >
                     <span className="text-2xl mr-3">{emoji}</span>
@@ -252,31 +259,87 @@ export default function Home({ onPageChange }) {
               className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
               whileHover={{ scale: 1.02 }}
             >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">相册精选</h3>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onPageChange && onPageChange('gallery')}
+                  className="px-3 py-2 text-sm rounded-lg bg-lightPink text-deepPink hover:bg-pink-200"
+                >
+                  查看全部
+                </motion.button>
+              </div>
+              {previewPhotos.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {previewPhotos.map((p, i) => (
+                    <motion.button
+                      key={p.id ?? i}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => onPageChange && onPageChange('gallery')}
+                      className="relative w-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700"
+                    >
+                      <img src={p.url} alt={p.title || 'photo'} className="w-full h-28 sm:h-32 object-cover" />
+                      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 text-xs bg-black/40 text-white truncate">
+                        {p.title || '照片'}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 dark:text-gray-400">暂无照片，前往相册添加</div>
+              )}
+            </motion.div>
+
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20"
+              whileHover={{ scale: 1.02 }}
+            >
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">重要时刻</h3>
               <div className="space-y-3">
-                {milestones.map((milestone) => (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <button onClick={() => setSelectedTag("")} className={`px-2 py-1 text-xs rounded-full ${!selectedTag ? 'bg-pink-600 text-white' : 'bg-pink-100 text-pink-700'}`}>全部</button>
+                  {allTags.map((t, i) => (
+                    <button key={i} onClick={() => setSelectedTag(t)} className={`px-2 py-1 text-xs rounded-full ${selectedTag === t ? 'bg-pink-600 text-white' : 'bg-pink-100 text-pink-700'}`}>{t}</button>
+                  ))}
+                </div>
+                {filteredMilestones.map((milestone) => (
                   <motion.div
                     key={milestone.id}
-                    className="flex items-center space-x-3 p-3 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-xl"
+                    className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-white/20 dark:border-gray-700/20 shadow"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <span className="text-xl">{milestone.emoji}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {milestone.event}
+                    <div className="flex items-center">
+                      {milestone.image_url ? (
+                        <img src={milestone.image_url} alt="milestone" className="w-16 h-16 rounded-lg object-cover mr-3" />
+                      ) : (
+                        <span className="text-xl mr-3">{milestone.emoji}</span>
+                      )}
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {milestone.event}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(milestone.date).toLocaleDateString('zh-CN')}
+                        </div>
+                        {Array.isArray(milestone.tags) && milestone.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {milestone.tags.map((t, i) => (
+                              <span key={i} className="px-2 py-1 text-xs rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">{t}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(milestone.date).toLocaleDateString('zh-CN')}
-                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => deleteMilestone(milestone.id)}
+                        className="px-2 py-1 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                      >
+                        删除
+                      </motion.button>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => deleteMilestone(milestone.id)}
-                      className="px-2 py-1 text-xs rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-                    >
-                      删除
-                    </motion.button>
                   </motion.div>
                 ))}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-3">

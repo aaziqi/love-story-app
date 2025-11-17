@@ -4,6 +4,7 @@ import { Settings, Heart, User, Calendar, Palette, Bell, Save, Check } from 'luc
 import { useSettings } from '../hooks/useLocalStorage';
 import DataSync from '../components/DataSync';
 import GroupShare from '../components/GroupShare';
+import MilestoneManager from '../components/MilestoneManager';
 
 const SettingsPage = () => {
   const { settings, updateSettings } = useSettings();
@@ -381,6 +382,14 @@ const SettingsPage = () => {
             transition={{ delay: 0.65 }}
           >
             <GroupShare />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <MilestoneManager />
           </motion.div>
         </div>
 
