@@ -302,8 +302,10 @@ export async function uploadPhotoFile(file) {
   if (!supabase) return null
   const scope = await getScope()
   if (!scope) return null
-  const filePath = `${scope.value}/${Date.now()}-${file.name}`
-  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false })
+  const safeName = (file?.name || 'photo').normalize('NFKC').replace(/[^\w\.\-]+/g, '_')
+  const ts = new Date().toISOString().replace(/[:\.]/g, '-')
+  const filePath = `${scope.value}/${ts}-${safeName}`
+  const { error: ue } = await supabase.storage.from('photos').upload(filePath, file, { upsert: false, contentType: file?.type || 'application/octet-stream', cacheControl: '3600' })
   if (ue) throw ue
   const { data: pub } = supabase.storage.from('photos').getPublicUrl(filePath)
   const url = pub?.publicUrl
