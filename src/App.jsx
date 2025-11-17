@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ErrorBoundary from "./components/ErrorBoundary";
 const Home = lazy(() => import("./pages/Home"));
 const StoryPage = lazy(() => import("./pages/StoryPage"));
 const GalleryPage = lazy(() => import("./pages/GalleryPage"));
@@ -80,13 +81,16 @@ function App() {
 
   if (!user) {
     return (
-      <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
-        <AuthPage onAuthed={setUser} />
-      </div>
+      <ErrorBoundary>
+        <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
+          <AuthPage onAuthed={setUser} />
+        </div>
+      </ErrorBoundary>
     );
   }
 
   return (
+    <ErrorBoundary>
     <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
       {/* 背景装饰 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -161,6 +165,7 @@ function App() {
         </svg>
       </motion.button>
     </div>
+    </ErrorBoundary>
   );
 }
 
